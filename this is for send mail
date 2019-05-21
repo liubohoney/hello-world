@@ -1,0 +1,50 @@
+import pymysql
+import pandas as pd
+try:
+   conn=pymysql.connect(host='maggiewei-data',port=3360,user='root',password='Micron19900423',db='db_liubo',charset='utf8')
+except:
+  print('could not connect mysql!')
+  
+def readexcel(address):
+  try:
+    data=pd.read_excel(address,header=[0])
+    return data
+  except:
+    print("read excel failed!")
+    
+def insert_mysql(value):
+  cur=conn.cursor()
+  sql='''INSERT INTO slt_reject_record2(WORKWEEK,SERIAL_NUMBER,PART_NUM,MODULE_LOT_ID,LOCATION,DT,QTY,REJECT_LOT_ID,DESIGN_ID,MODULE_FORM_FACTOR,DISPOSITION)
+      VALUES
+      (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)'''
+   cur.execute("DROP TABLE IF EXISTS slt_reject_record2")
+   cur.execute('''
+    CREATE TABLE `db_liubo`.`slt_reject_record2`(
+    `WORKWEEK` VARCHAR(10) NULL,
+    `SERIAL_NUMBER` VARCHAR(45) NULL,
+    `PART_NUM` VARCHAR(45) NULL,
+    `MODULE_LOT_ID` VARCHAR(45) NULL,
+    `LOCATION` VARCHAR(45) NULL,
+    `DT` VARCHAR(45) NULL,
+    `QTY` VARCHAR(45) NULL,
+    `REJECT_LOT_ID` VARCHAR(45) NULL,
+    `DESIGN_ID` VARCHAR(45) NULL,
+    `MODULE_FORM_FACTOR` VARCHAR(45) NULL,
+    `DISPOSITION` VARCHAR(45) NULL);
+    ''')
+  cur.executemany(sql,value)
+  conn.commit()
+  cur.close()
+  
+df=readexcel(r'\Common\data\module_test.xlsm')
+df=pd.DataFrame(df,columns=['WorkWeek','SN','PartNum','ModuleLotID','Location','DT','Qty','RejectLotID','DESIGN ID','Moudleformfactor','Disposition'])
+df=df.dropna(how='all')
+df=df.astype(str)
+df=df.values.tolist()
+
+insert_mysql(df)
+conn.close()
+print('ok')
+      
+
+  
